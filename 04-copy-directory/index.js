@@ -1,36 +1,24 @@
 const path = require('path');
-const fs = require('fs');
+const fsP = require('fs').promises;
 const srcDir = path.join(__dirname, 'files');
 const destDir = path.join(__dirname, 'files-copy');
 
-// check if directory already exist and if no create it
+async function listDir(dir) {                 // return array of directory files
+  const files = await fsP.readdir(dir);
+  return files;
+}
 
-fs.mkdir(destDir, { recursive: true }, err => {
-    if (err) console.log(err);
-});
+async function CopyDir(src, dest) {
 
-// clear destination directory before running the copy function
+  fsP.mkdir(dest, { recursive: true });       // check if dest dir exist if no create
 
-fs.readdir(destDir, (err, files) => {
-    if (err) console.log(err);
-    files.forEach((file) => {
-        fs.unlink(`${destDir}/${file}`, (err) => {
-            if (err) console.log(err);
-        });
-    });
-});
+  for (const file of await listDir(dest)) {   // clear dest dir
+    fsP.unlink(path.join(dest, file));
+  }
 
-// copy from source directory to destination directory
+  for (const file of await listDir(src)) {    // copy from src to dest dir
+    fsP.copyFile(path.join(src, file), path.join(dest, file));
+  }
+}
 
-fs.readdir(srcDir, (err, files) => {    // read src dir files
-    if (err)
-        console.log(err);
-    else {
-        files.forEach((file) => {       // copy files from src dir to dest dir
-            fs.copyFile(`${srcDir}/${file}`, `${destDir}/${file}`, (err) => {
-                if (err) console.log(err);
-            });
-        });
-    }
-})
-
+CopyDir(srcDir, destDir);
